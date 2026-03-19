@@ -44,7 +44,10 @@
       background: var(--accent-dim); border: 1px solid var(--accent);
       border-radius: 20px; padding: 4px 14px;
       font-size: 12px; font-weight: 700; color: var(--accent);
+      text-decoration: none; cursor: pointer;
+      transition: background 0.15s;
     }
+    .estr-pill:hover { background: rgba(0,208,132,0.2); }
     .estr-pill .dot {
       width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
       animation: pulse 2s infinite;
@@ -222,10 +225,11 @@
     <div class="logo">Cash<span>Park</span>Finder</div>
     <div class="header-sub">Confronta ETF monetari e conto deposito · Regime fiscale italiano</div>
   </div>
-  <div class="estr-pill" id="estrPill">
+  <a class="estr-pill" id="estrPill" href="https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_short-term_rate/html/index.en.html" target="_blank" title="Verifica il tasso €STR sul sito BCE">
     <span class="dot"></span>
     <span id="estrLabel">€STR: —</span>
-  </div>
+    <span style="font-size:10px;opacity:0.7">↗</span>
+  </a>
 </header>
 
 <div class="layout">
@@ -349,20 +353,22 @@ const ETFS = [
     issuer: 'DWS / Xtrackers', isin: 'LU0290358497',
     index: 'Solactive €STR +8.5 bps Daily TR',
     ter: 0.10, spread: 0.085,
-    taxRate: 12.5, whitelistPct: '~97%',
-    whitelistUrl: 'https://funds.dws.com/it-it/Download/fiscalita-white-list/',
-    taxNote: 'Whitelist ~97% → tassazione effettiva ~12.5%',
+    taxRate: 12.5,
+    taxLabel: '12.5%', taxType: 'bond',
+    taxNote: 'Composto da titoli obbligazionari → tassazione agevolata 12.5%',
+    productUrl: 'https://etf.dws.com/it-it/LU0290358497-eur-overnight-rate-swap-ucits-etf-1c/',
     checked: true,
   },
   {
     id: 'c3m', ticker: 'C3M', color: '#4f9eff',
-    name: 'Amundi Euro Govies 0-6M Investment Grade',
+    name: 'Amundi Euro Govies 0-6M Investment Grade UCITS ETF',
     issuer: 'Amundi', isin: 'FR0010754200',
     index: 'EuroMTS Govt Bill 0-6M',
     ter: 0.14, spread: 0,
-    taxRate: 12.5, whitelistPct: '100%',
-    whitelistUrl: 'https://www.amundietf.it/professional/product/view/FR0010754200',
-    taxNote: '100% titoli di stato europei → 12.5%',
+    taxRate: 12.5,
+    taxLabel: '12.5%', taxType: 'bond',
+    taxNote: 'Titoli di stato europei → tassazione agevolata 12.5%',
+    productUrl: 'https://www.amundietf.it/professional/product/view/FR0010754200',
     checked: true,
   },
   {
@@ -371,20 +377,22 @@ const ETFS = [
     issuer: 'Lyxor / Amundi', isin: 'LU1190417599',
     index: 'Euro Overnight Return (gestione attiva)',
     ter: 0.05, spread: 0.10,
-    taxRate: 26, whitelistPct: '<20%',
-    whitelistUrl: 'https://www.amundietf.it/professional/product/view/LU1190417599',
-    taxNote: 'Whitelist bassa → tassazione 26%',
+    taxRate: 26,
+    taxLabel: '26%', taxType: 'standard',
+    taxNote: 'Non composto prevalentemente da obbligazioni → tassazione standard 26%',
+    productUrl: 'https://www.amundietf.it/professional/product/view/LU1190417599',
     checked: false,
   },
   {
     id: 'leonia', ticker: 'LEONIA', color: '#c77dff',
-    name: 'BNP Paribas Easy € Overnight Return',
-    issuer: 'BNP Paribas', isin: 'LU0290358497',
+    name: 'BNP Paribas Easy € Overnight Return UCITS ETF',
+    issuer: 'BNP Paribas', isin: 'LU0191695783',
     index: 'Solactive Euro Overnight Return',
     ter: 0.10, spread: 0,
-    taxRate: 26, whitelistPct: '<20%',
-    whitelistUrl: 'https://easy.bnpparibas-am.com/it/etf-fondi-indicizzati',
-    taxNote: 'Whitelist bassa → tassazione 26%',
+    taxRate: 26,
+    taxLabel: '26%', taxType: 'standard',
+    taxNote: 'Non composto prevalentemente da obbligazioni → tassazione standard 26%',
+    productUrl: 'https://easy.bnpparibas-am.com/it/etf-fondi-indicizzati/leonia',
     checked: false,
   },
   {
@@ -393,9 +401,10 @@ const ETFS = [
     issuer: 'Franklin Templeton', isin: 'IE00BF2GLM36',
     index: 'Gestione attiva – breve scadenza EUR',
     ter: 0.06, spread: 0.05,
-    taxRate: 19, whitelistPct: '~50%',
-    whitelistUrl: 'https://www.franklintempleton.it/investments/options/exchange-traded-funds',
-    taxNote: 'Whitelist ~50% → tassazione ibrida ~19%',
+    taxRate: 26,
+    taxLabel: '26%', taxType: 'standard',
+    taxNote: 'Composizione mista → si applica per prudenza tassazione standard 26%',
+    productUrl: 'https://www.franklintempleton.it/investments/options/exchange-traded-funds/products/32378/SINGLSHARE/franklin-euro-short-maturity-ucits-etf/IE00BF2GLM36',
     checked: false,
   },
 ];
@@ -459,7 +468,7 @@ function buildEtfGrid() {
           <span class="tag">ISIN ${etf.isin}</span>
           <span class="tag blue">TER ${etf.ter}%</span>
           <span class="tag green">WL ${etf.whitelistPct}</span>
-          <a class="tag link" href="${etf.whitelistUrl}" target="_blank" onclick="event.stopPropagation()">📄 Whitelist</a>
+          <a class="tag link" href="${etf.productUrl}" target="_blank" onclick="event.stopPropagation()">↗ Scheda prodotto</a>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px;">${etf.taxNote}</div>
         <div class="etf-result" id="res-${etf.id}">
@@ -477,13 +486,15 @@ function buildEtfGrid() {
       </div>`;
     card.addEventListener('click', e => {
       if (e.target.tagName === 'A') return;
-      const chk = document.getElementById('chk-' + etf.id);
+      if (e.target.tagName === 'INPUT') return; // gestito da change
+      const chk = card.querySelector('input[type=checkbox]');
       chk.checked = !chk.checked;
       etf.checked = chk.checked;
       card.classList.toggle('active', etf.checked);
       render();
     });
-    card.querySelector('#chk-' + etf.id).addEventListener('change', e => {
+    card.querySelector('input[type=checkbox]').addEventListener('change', e => {
+      e.stopPropagation();
       etf.checked = e.target.checked;
       card.classList.toggle('active', etf.checked);
       render();
