@@ -65,7 +65,7 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     /* ── LAYOUT ── */
-    .layout { display: grid; grid-template-columns: 258px 1fr; min-height: calc(100vh - 48px); }
+    .layout { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 48px); }
     .sidebar {
       background: var(--surface); border-right: 1px solid var(--border);
       padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
@@ -140,7 +140,7 @@
 
     /* ── CARDS SECTION ── */
     .cards-section-title { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
     /* ── INSTRUMENT CARD ── */
     .instr-card {
@@ -178,6 +178,14 @@
     .tag-ter   { background: var(--accent2-dim); color: var(--accent2); }
     .tag-tax12 { background: var(--accent-dim);  color: var(--accent); }
     .tag-tax26 { background: rgba(255,181,71,.12); color: var(--warning); }
+    /* TER color classes */
+    .tag-ter-green  { background: var(--accent-dim);           color: var(--accent);  }
+    .tag-ter-yellow { background: rgba(255,181,71,.12);        color: var(--warning); }
+    .tag-ter-red    { background: rgba(255,95,126,.12);        color: var(--danger);  }
+    /* Tax color classes */
+    .tag-tax-green  { background: var(--accent-dim);           color: var(--accent);  }
+    .tag-tax-yellow { background: rgba(255,181,71,.12);        color: var(--warning); }
+    .tag-tax-red    { background: rgba(255,95,126,.12);        color: var(--danger);  }
     .tag-link  {
       font-size: 10px; font-family: var(--sans); padding: 2px 8px; border-radius: 4px;
       color: var(--accent2); text-decoration: none;
@@ -255,7 +263,7 @@
       font-family: var(--sans);
     }
     .toggle-btn.active { background: var(--surface2); color: var(--text); }
-    #chartWrap { position: relative; height: 340px; }
+    #chartWrap { position: relative; height: 420px; }
 
     /* ── LOADING ── */
     #loading {
@@ -455,12 +463,12 @@ const ETFS = [
     checked:false,
   },
   {
-    id:'peu', ticker:'PEU', color:'#ff7c5c',
+    id:'peu', ticker:'PEU', color:'#38bdf8',
     name:'Invesco Euro Cash 3 Months UCITS ETF Acc',
     issuer:'Invesco', isin:'IE00B3BPCH51',
     index:'FTSE Eurozone Government Bill 0-6 Month Capped',
     ter:0.09, spread:0, taxRate:12.5, taxLabel:'Tasse 12.5%', taxType:'bond',
-    productUrl:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html?msockid=280e5d8b378c66950f52494c3620677d://www.franklintempleton.it/prodotti/i-nostri-etf/prodotto/27049/ETA/franklin-euro-short-maturity-ucits-etf/IE000STIHQB2',
+    productUrl:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html',
     whiteList:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html#Documenti',
     checked:false,
   },
@@ -509,7 +517,8 @@ async function fetchESTR() {
 function buildEtfCards() {
   const grid = document.getElementById('etfGrid');
   ETFS.forEach(etf => {
-    const taxClass = etf.taxType === 'bond' ? 'tag-tax12' : 'tag-tax26';
+    const terClass  = etf.ter < 0.15 ? 'tag-ter-green' : etf.ter <= 0.20 ? 'tag-ter-yellow' : 'tag-ter-red';
+    const taxClass  = etf.taxRate < 15 ? 'tag-tax-green' : etf.taxRate <= 20 ? 'tag-tax-yellow' : 'tag-tax-red';
     const card = document.createElement('div');
     card.className = 'instr-card' + (etf.checked ? ' etf-active' : '');
     card.id = 'etfcard-' + etf.id;
@@ -519,14 +528,17 @@ function buildEtfCards() {
         <div class="card-body">
           <div class="card-ticker"><span class="card-dot" style="background:${etf.color}"></span>${etf.ticker}</div>
           <div class="card-issuer">${etf.issuer}</div>
-          <div class="card-index">${etf.index}</div>
+          <div class="card-index">${etf.name}</div>
           <div class="card-meta">
             <div class="card-meta-row">
               <span class="tag tag-isin">ISIN ${etf.isin}</span>
-              <a class="tag-link" href="${etf.productUrl}" target="_blank" onclick="event.stopPropagation()">↗ Scheda</a>
             </div>
             <div class="card-meta-row">
-              <span class="tag tag-ter">TER ${etf.ter}%</span>
+              <a class="tag-link" href="${etf.productUrl}" target="_blank" onclick="event.stopPropagation()">↗ Scheda</a>
+              <a class="tag-link" href="${etf.whiteList}" target="_blank" onclick="event.stopPropagation()">↗ Whitelist</a>
+            </div>
+            <div class="card-meta-row">
+              <span class="tag ${terClass}">TER ${etf.ter} %</span>
               <span class="tag ${taxClass}">${etf.taxLabel}</span>
             </div>
           </div>
@@ -587,7 +599,7 @@ function addDepositCard(init = {}) {
       <div class="card-chk cd"><input type="checkbox" checked /></div>
       <div class="card-body">
         <div class="card-ticker"><span class="card-dot" style="background:${dep.color}"></span><span id="cdtitle-${dep.id}">${dep.name}</span></div>
-        <div class="card-issuer">Tasso fisso · Vincolo</div>
+
       </div>
     </div>
     <div class="cd-form">
@@ -703,7 +715,7 @@ function updateCardResults(id, yieldVal, finalV, gain, gainP, isDeposit) {
   const yEl = document.getElementById('yield-' + id);
   const fEl = document.getElementById('final-' + id);
   const gEl = document.getElementById('gain-'  + id);
-  if (yEl) yEl.textContent = yieldVal.toFixed(3) + '%/anno';
+  if (yEl) yEl.textContent = yieldVal.toFixed(3) + ' %/anno';
   if (fEl) fEl.textContent = fmt(finalV);
   if (gEl) {
     gEl.textContent = (gain >= 0 ? '+' : '') + fmt(gain) + ' (' + fmtPct(gainP) + ')';
@@ -773,7 +785,7 @@ function render() {
           ticks: {
             color:'#6b738a',
             font: { size:11, family:"'JetBrains Mono',monospace" },
-            maxTicksLimit: 8,
+            maxTicksLimit: 6,
             callback: v => '€' + Math.round(v).toLocaleString('it-IT')
           }
         }
