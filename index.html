@@ -4,25 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CashParkFinder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg:         #0f1117;
-      --surface:    #1a1d27;
-      --surface2:   #22263a;
-      --border:     #2e3348;
-      --text:       #e8eaf0;
-      --muted:      #7b82a0;
-      --accent:     #00d084;
-      --accent-dim: rgba(0,208,132,0.12);
-      --accent2:    #4f9eff;
-      --red:        #ff5c5c;
-      --yellow:     #f5c842;
-      --radius:     8px;
+      --bg:         #0d0f14;
+      --surface:    #13161e;
+      --surface2:   #1a1e2a;
+      --border:     #252a38;
+      --border-lt:  #2e3448;
+      --accent:     #4fffb0;
+      --accent2:    #7b6cff;
+      --accent-dim: rgba(79,255,176,.12);
+      --accent2-dim:rgba(123,108,255,.12);
+      --danger:     #ff5f7e;
+      --warning:    #ffb547;
+      --text:       #e8ecf4;
+      --muted:      #6b738a;
+      --dim:        #9aa0b8;
+      --radius:     10px;
+      --radius-sm:  6px;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: var(--sans);
       background: var(--bg); color: var(--text);
       font-size: 13px; line-height: 1.5;
     }
@@ -34,154 +42,197 @@
       background: var(--surface); border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 10;
     }
-    .logo { font-size: 15px; font-weight: 700; color: var(--text); }
-    .logo span { color: var(--accent); }
-    .header-sub { font-size: 11px; color: var(--muted); }
+    .logo { display: flex; align-items: center; gap: 9px; font-family: var(--sans); font-weight: 700; font-size: 15px; letter-spacing: -.3px; }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .header-sub { font-size: 11px; color: var(--muted); font-family: var(--sans); }
     .estr-pill {
       margin-left: auto; display: flex; align-items: center; gap: 7px;
       background: var(--accent-dim); border: 1px solid var(--accent);
       border-radius: 20px; padding: 4px 13px;
-      font-size: 12px; font-weight: 700; color: var(--accent);
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      font-family: var(--mono);
       text-decoration: none; transition: background .15s;
     }
-    .estr-pill:hover { background: rgba(0,208,132,.22); }
-    .estr-pill.stale { color: var(--yellow); border-color: var(--yellow); background: rgba(245,200,66,.1); }
-    .estr-pill.stale .edot { background: var(--yellow); }
-    .edot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: blink 2s infinite; }
+    .estr-pill:hover { background: rgba(79,255,176,.22); }
+    .estr-pill.stale { color: var(--warning); border-color: var(--warning); background: rgba(255,181,71,.1); }
+    .estr-pill.stale .edot { background: var(--warning); }
+    .edot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: blink 2s infinite; flex-shrink: 0; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     /* ── LAYOUT ── */
-    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 48px); }
+    .layout { display: grid; grid-template-columns: 258px 1fr; min-height: calc(100vh - 48px); }
     .sidebar {
       background: var(--surface); border-right: 1px solid var(--border);
-      padding: 16px; display: flex; flex-direction: column; gap: 16px;
-      overflow-y: auto;
+      padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
     }
     .main { padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
 
-    /* ── SIDEBAR SECTIONS ── */
+    /* ── SIDEBAR ELEMENTS ── */
     .sec-title {
-      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      font-size: 10px; font-weight: 600; letter-spacing: .07em;
       text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
     }
     .divider { border: none; border-top: 1px solid var(--border); }
 
-    /* ── FIELD ── */
+    /* ── DISCLAIMER (top of sidebar) ── */
+    .disclaimer {
+      background: rgba(255,181,71,.06); border: 1px solid rgba(255,181,71,.22);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      font-size: 11px; color: var(--muted); line-height: 1.6;
+    }
+    .disclaimer strong { color: var(--warning); }
+
+    /* ── FIELDS ── */
     .field { margin-bottom: 10px; }
-    .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .field-row { display: flex; gap: 8px; }
-    .field-row .field { flex: 1; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block; font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em; font-weight: 500;
+      margin-bottom: 5px;
+    }
     .field input[type=number] {
-      width: 100%; padding: 7px 10px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: var(--radius); color: var(--text); font-size: 13px; outline: none;
+      width: 100%; padding: 8px 10px;
+      background: var(--bg); border: 1px solid var(--border-lt);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: var(--mono); font-size: 13px; outline: none;
+      transition: border-color .15s;
+      /* hide spinner default ugly style; keep functional */
+      -moz-appearance: textfield;
     }
     .field input[type=number]:focus { border-color: var(--accent2); }
-    /* nasconde suffisso sovrapposto alle frecce: unità nella label */
-    .field input[type=number]::-webkit-inner-spin-button { opacity: .6; }
-
-    /* ── SUMMARY TABLE ── */
-    .summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .summary-table th {
-      text-align: left; font-size: 10px; font-weight: 600;
-      color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--border);
+    .field input[type=number]::-webkit-inner-spin-button,
+    .field input[type=number]::-webkit-outer-spin-button {
+      opacity: 0; width: 22px; cursor: pointer;
     }
-    .summary-table td { padding: 5px 6px; border-bottom: 1px solid rgba(46,51,72,.5); }
-    .summary-table tr:last-child td { border-bottom: none; }
-    .summary-table .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .s-gain { font-weight: 700; }
-    .s-gain.pos { color: var(--accent); }
-    .s-gain.neg { color: var(--red); }
+    .field input[type=number]:hover::-webkit-inner-spin-button,
+    .field input[type=number]:hover::-webkit-outer-spin-button { opacity: .5; }
+    .field-row { display: flex; gap: 8px; }
+    .field-row .field { flex: 1; }
 
     /* ── SCENARIO ── */
-    .seg { display: flex; background: var(--surface2); border-radius: 6px; padding: 2px; gap: 2px; }
+    .seg { display: flex; background: var(--surface2); border-radius: var(--radius-sm); padding: 2px; gap: 2px; }
     .seg-btn {
-      flex: 1; text-align: center; padding: 5px 6px; border-radius: 5px;
+      flex: 1; text-align: center; padding: 5px 4px; border-radius: 5px;
       font-size: 11px; font-weight: 600; cursor: pointer; color: var(--muted);
-      transition: all .15s; user-select: none;
+      transition: all .15s; user-select: none; font-family: var(--sans);
     }
-    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
-    .scenario-note { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic; }
+    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .scenario-note { font-size: 11px; color: var(--muted); margin-top: 7px; font-style: italic; line-height: 1.4; }
 
-    /* ── CARDS GRID ── */
-    .cards-header {
-      display: flex; align-items: center; justify-content: space-between;
+    /* ── SUMMARY TABLE ── */
+    .summary-table { width: 100%; border-collapse: collapse; }
+    .summary-table th {
+      text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .05em;
+      color: var(--muted); text-transform: uppercase;
+      padding: 4px 6px; border-bottom: 1px solid var(--border);
     }
-    .cards-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px;
-    }
+    .summary-table td { padding: 6px 6px; border-bottom: 1px solid rgba(37,42,56,.6); font-family: var(--mono); font-size: 12px; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .sum-name { font-family: var(--sans); font-size: 11px; display: flex; align-items: center; gap: 5px; }
+    .sdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+    .s-pos { color: var(--accent); font-weight: 600; }
+    .s-neg { color: var(--danger); font-weight: 600; }
+
+    /* ── CARDS SECTION ── */
+    .cards-section-title { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px; }
 
     /* ── INSTRUMENT CARD ── */
     .instr-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 12px 14px;
+      border-radius: var(--radius); padding: 13px 14px;
       cursor: pointer; transition: border-color .15s, background .15s;
       position: relative;
     }
-    .instr-card.active  { border-color: var(--accent); background: rgba(0,208,132,.05); }
-    .instr-card.active2 { border-color: var(--accent2); background: rgba(79,158,255,.05); }
-    .instr-card:hover   { border-color: var(--muted); }
+    .instr-card.etf-active  { border-color: var(--accent);  background: var(--accent-dim); }
+    .instr-card.cd-active   { border-color: var(--accent2); background: var(--accent2-dim); }
+    .instr-card:not(.etf-active):not(.cd-active):hover { border-color: var(--border-lt); }
+
     .card-top { display: flex; align-items: flex-start; gap: 9px; }
-    .card-check input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; margin-top: 2px; }
-    .card-check-cd input { accent-color: var(--accent2); }
-    .card-main { flex: 1; min-width: 0; }
-    .card-ticker { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 7px; }
+    .card-chk input { width: 14px; height: 14px; margin-top: 3px; cursor: pointer; }
+    .card-chk.etf input { accent-color: var(--accent); }
+    .card-chk.cd  input { accent-color: var(--accent2); }
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-ticker {
+      font-family: var(--mono); font-weight: 600; font-size: 14px;
+      display: flex; align-items: center; gap: 7px; margin-bottom: 2px;
+    }
     .card-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .card-name { font-size: 11px; color: var(--muted); margin-top: 1px; }
-    .card-index { font-size: 11px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+    .card-issuer { font-size: 11px; color: var(--muted); }
+    .card-index  { font-size: 11px; color: var(--dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* meta tags — two rows */
+    .card-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+    .card-meta-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
     .tag {
-      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px;
       background: var(--surface2); color: var(--muted); white-space: nowrap;
     }
-    .tag.green { background: rgba(0,208,132,.12); color: var(--accent); }
-    .tag.blue  { background: rgba(79,158,255,.12); color: var(--accent2); }
-    .tag.yellow{ background: rgba(245,200,66,.12); color: var(--yellow); }
+    .tag-isin  { color: var(--dim); }
+    .tag-ter   { background: var(--accent2-dim); color: var(--accent2); }
+    .tag-tax12 { background: var(--accent-dim);  color: var(--accent); }
+    .tag-tax26 { background: rgba(255,181,71,.12); color: var(--warning); }
     .tag-link  {
-      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-family: var(--sans); padding: 2px 8px; border-radius: 4px;
       color: var(--accent2); text-decoration: none;
-      border: 1px solid rgba(79,158,255,.25); white-space: nowrap;
+      border: 1px solid rgba(123,108,255,.3); white-space: nowrap; transition: background .15s;
     }
-    .tag-link:hover { background: rgba(79,158,255,.1); }
-    .card-tax-note { font-size: 10px; color: var(--muted); margin-top: 5px; }
+    .tag-link:hover { background: var(--accent2-dim); }
+
+    /* result section inside card */
     .card-results {
-      margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     }
-    .cr-item .cr-label { font-size: 10px; color: var(--muted); }
-    .cr-item .cr-val   { font-size: 14px; font-weight: 700; margin-top: 1px; }
-    .cr-item .cr-val.pos { color: var(--accent); }
-    .cr-item .cr-val.pos2{ color: var(--accent2); }
-    .cr-item .cr-sub   { font-size: 10px; color: var(--muted); }
+    .cr-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .cr-val   { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); }
+    .cr-sub   { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* DELETE button (deposit cards) */
+    .card-del {
+      position: absolute; top: 10px; right: 10px;
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 13px; padding: 2px 6px; border-radius: 4px;
+      transition: color .15s, background .15s; line-height: 1;
+    }
+    .card-del:hover { color: var(--danger); background: rgba(255,95,126,.1); }
+
+    /* ── DEPOSIT FORM ── */
+    .cd-form { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--border); }
+    .cd-form .field label { font-size: 10px; }
+    .cd-form .field input[type=text],
+    .cd-form .field input[type=number] {
+      width: 100%; padding: 7px 9px;
+      background: var(--bg); border: 1px solid var(--border-lt);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: var(--mono); font-size: 12px; outline: none;
+      transition: border-color .15s;
+      -moz-appearance: textfield;
+    }
+    .cd-form .field input[type=text]   { font-family: var(--sans); }
+    .cd-form .field input:focus { border-color: var(--accent2); }
+    .cd-form .field input[type=number]::-webkit-inner-spin-button,
+    .cd-form .field input[type=number]::-webkit-outer-spin-button { opacity: 0; width: 20px; cursor: pointer; }
+    .cd-form .field input[type=number]:hover::-webkit-inner-spin-button,
+    .cd-form .field input[type=number]:hover::-webkit-outer-spin-button { opacity: .5; }
 
     /* ── ADD DEPOSIT BUTTON ── */
     .add-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      background: transparent; border: 1px dashed var(--border);
-      border-radius: var(--radius); padding: 20px;
+      background: transparent; border: 1px dashed var(--border-lt);
+      border-radius: var(--radius); padding: 18px;
       cursor: pointer; color: var(--muted); font-size: 13px;
-      transition: all .15s;
+      font-family: var(--sans);
+      transition: all .15s; margin-top: 10px;
     }
-    .add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-
-    /* ── DEPOSIT CARD FORM ── */
-    .cd-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-    .cd-form .field-row { flex-wrap: wrap; }
-    .cd-form .field label { color: var(--muted); }
-    .cd-form .field input[type=text],
-    .cd-form .field input[type=number] {
-      width: 100%; padding: 6px 9px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); font-size: 12px; outline: none;
-    }
-    .cd-form .field input:focus { border-color: var(--accent2); }
-    .card-del {
-      position: absolute; top: 10px; right: 10px;
-      background: none; border: none; color: var(--muted); cursor: pointer;
-      font-size: 14px; padding: 2px 5px; border-radius: 4px;
-      transition: color .15s, background .15s;
-    }
-    .card-del:hover { color: var(--red); background: rgba(255,92,92,.1); }
+    .add-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--accent2-dim); }
+    .add-btn-plus { font-size: 18px; line-height: 1; }
 
     /* ── CHART CARD ── */
     .chart-card {
@@ -193,21 +244,22 @@
       margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
     }
     .chart-title { font-size: 13px; font-weight: 600; }
-    .chart-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .chart-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
     .toggle-sw {
-      display: flex; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 6px; padding: 2px; gap: 2px;
+      display: flex; background: var(--bg); border: 1px solid var(--border-lt);
+      border-radius: var(--radius-sm); padding: 2px; gap: 2px;
     }
     .toggle-btn {
-      padding: 4px 16px; border-radius: 5px; font-size: 12px; font-weight: 600;
+      padding: 5px 18px; border-radius: 5px; font-size: 12px; font-weight: 600;
       cursor: pointer; color: var(--muted); transition: all .15s; user-select: none;
+      font-family: var(--sans);
     }
     .toggle-btn.active { background: var(--surface2); color: var(--text); }
-    #chartWrap { position: relative; height: 300px; }
+    #chartWrap { position: relative; height: 340px; }
 
     /* ── LOADING ── */
     #loading {
-      position: fixed; inset: 0; background: rgba(15,17,23,.88);
+      position: fixed; inset: 0; background: rgba(13,15,20,.9);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 99; gap: 12px;
     }
@@ -217,14 +269,7 @@
       border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading p { font-size: 13px; color: var(--muted); }
-
-    /* ── DISCLAIMER ── */
-    .disclaimer {
-      background: rgba(245,200,66,.05); border: 1px solid rgba(245,200,66,.2);
-      border-radius: var(--radius); padding: 9px 13px;
-      font-size: 11px; color: var(--muted); line-height: 1.6;
-    }
+    #loading p { font-size: 13px; color: var(--muted); font-family: var(--sans); }
 
     @media (max-width: 720px) {
       .layout { grid-template-columns: 1fr; }
@@ -240,16 +285,17 @@
 </div>
 
 <header>
-  <div>
-    <div class="logo">Cash<span>Park</span>Finder</div>
-    <div class="header-sub">Confronta ETF monetari e conto deposito · Regime fiscale italiano</div>
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    CashParkFinder
   </div>
+  <div class="header-sub">Confronta ETF monetari e conti deposito · Regime fiscale italiano</div>
   <a class="estr-pill" id="estrPill"
      href="https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_short-term_rate/html/index.en.html"
      target="_blank" title="Verifica il tasso €STR sul sito ufficiale BCE">
     <span class="edot"></span>
     <span id="estrLabel">€STR: —</span>
-    <span style="font-size:10px;opacity:.65">↗</span>
+    <span style="font-size:10px;opacity:.6;margin-left:2px">↗</span>
   </a>
 </header>
 
@@ -258,7 +304,15 @@
   <!-- ════ SIDEBAR ════ -->
   <aside class="sidebar">
 
-    <!-- Capitale + Durata -->
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>⚠ Avviso</strong><br>
+      Strumento puramente indicativo. Non costituisce consulenza finanziaria o fiscale. I rendimenti ETF sono variabili. Verifica sempre la tua situazione prima di investire.
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Parametri generali -->
     <div>
       <div class="sec-title">Parametri Generali</div>
       <div class="field">
@@ -285,7 +339,7 @@
         <label id="deltaLabel">Variazione annua (%)</label>
         <input type="number" id="scenarioDelta" value="0.25" min="0.05" max="2" step="0.05" />
       </div>
-      <p class="scenario-note" id="scenarioNote">Tasso €STR costante per tutta la durata</p>
+      <p class="scenario-note" id="scenarioNote">Tasso €STR costante per tutta la durata.</p>
     </div>
 
     <hr class="divider" />
@@ -297,20 +351,14 @@
         <thead>
           <tr>
             <th>Strumento</th>
-            <th style="text-align:right">Capitale</th>
-            <th style="text-align:right">Guadagno</th>
+            <th style="text-align:right">Finale</th>
+            <th style="text-align:right">+/−</th>
           </tr>
         </thead>
         <tbody id="summaryBody">
           <tr><td colspan="3" style="color:var(--muted);font-size:11px;padding:8px 6px;">Nessuno strumento attivo</td></tr>
         </tbody>
       </table>
-    </div>
-
-    <hr class="divider" />
-
-    <div class="disclaimer">
-      ⚠️ Strumento indicativo. Non costituisce consulenza finanziaria. I rendimenti ETF sono variabili. Verifica sempre la tua situazione fiscale.
     </div>
 
   </aside>
@@ -320,23 +368,16 @@
 
     <!-- ETF cards -->
     <div>
-      <div class="cards-header" style="margin-bottom:10px;">
-        <div class="sec-title" style="margin:0">ETF Monetari</div>
-      </div>
+      <div class="cards-section-title">ETF Monetari</div>
       <div class="cards-grid" id="etfGrid"></div>
     </div>
 
-    <!-- Deposit cards + add button -->
+    <!-- Deposit cards -->
     <div>
-      <div class="cards-header" style="margin-bottom:10px;">
-        <div class="sec-title" style="margin:0">Conti Deposito</div>
-      </div>
+      <div class="cards-section-title">Conti Deposito</div>
       <div class="cards-grid" id="cdGrid"></div>
-      <div style="margin-top:10px;">
-        <div class="add-btn" id="addCdBtn">
-          <span style="font-size:18px;line-height:1">+</span>
-          Aggiungi conto deposito
-        </div>
+      <div class="add-btn" id="addCdBtn">
+        <span class="add-btn-plus">+</span>Aggiungi conto deposito
       </div>
     </div>
 
@@ -359,84 +400,87 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// ETF DATA
+// ══════════════════════════════════════════════════
 const ETFS = [
   {
-    id:'xeon', ticker:'XEON', color:'#00d084',
+    id:'xeon', ticker:'XEON', color:'#4fffb0',
     name:'Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C',
     issuer:'DWS / Xtrackers', isin:'LU0290358497',
-    index:'Solactive €STR +8.5 bps Daily TR',
-    ter:0.10, spread:0.085,
-    taxRate:12.5, taxLabel:'12.5%', taxType:'bond',
-    taxNote:'Composto da strumenti obbligazionari → aliquota stimata 12.5%',
+    index:'Solactive €STR +8.5 bps Daily',
+    ter:0.10, spread:0.085, taxRate:14,19, taxLabel:'Tasse 14.19%', taxType:'bond',
     productUrl:'https://etf.dws.com/it-it/LU0290358497-eur-overnight-rate-swap-ucits-etf-1c/',
+    whiteList:'https://etf.dws.com/it-it/informativa-prodotti/etf-documenti/fiscalita-degli-etf/',
     checked:true,
   },
   {
-    id:'c3m', ticker:'C3M', color:'#4f9eff',
+    id:'c3m', ticker:'C3M', color:'#7b6cff',
     name:'Amundi Euro Govies 0-6M Investment Grade UCITS ETF',
     issuer:'Amundi', isin:'FR0010754200',
-    index:'EuroMTS Govt Bill 0-6M',
-    ter:0.14, spread:0,
-    taxRate:12.5, taxLabel:'12.5%', taxType:'bond',
-    taxNote:'Titoli di stato europei → aliquota stimata 12.5%',
-    productUrl:'https://www.amundietf.it/professional/product/view/FR0010754200',
+    index:'FTSE Eurozone Government Bill 0-6 Month Capped',
+    ter:0.14, spread:0, taxRate:12.72, taxLabel:'Tasse 12.72%', taxType:'bond',
+    productUrl:'https://www.amundietf.it/it/privati/products/fixed-income/amundi-euro-government-bond-06-m-ucits-etf-acc/fr0010754200',
+    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
     checked:true,
   },
   {
-    id:'smart', ticker:'SMART', color:'#f5c842',
-    name:'Lyxor Smart Overnight Return UCITS ETF',
-    issuer:'Lyxor / Amundi', isin:'LU1190417599',
-    index:'Euro Overnight Return (gestione attiva)',
-    ter:0.05, spread:0.10,
-    taxRate:26, taxLabel:'26%', taxType:'standard',
-    taxNote:'Non prevalentemente obbligazionario → aliquota stimata 26%',
-    productUrl:'https://www.amundietf.it/professional/product/view/LU1190417599',
+    id:'smart', ticker:'SMART', color:'#ffb547',
+    name:'Amundi Smart Overnight Return UCITS ETF Acc',
+    issuer:'Amundi', isin:'LU1190417599',
+    index:'Gestione attiva',
+    ter:0.10, spread:0, taxRate:26, taxLabel:'Tasse 26%', taxType:'standard',
+    productUrl:'https://www.amundietf.it/it/privati/products/fixed-income/amundi-smart-overnight-return-ucits-etf-acc/lu1190417599',
+    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
     checked:false,
   },
   {
     id:'leonia', ticker:'LEONIA', color:'#c77dff',
-    name:'BNP Paribas Easy € Overnight Return UCITS ETF',
-    issuer:'BNP Paribas', isin:'LU0191695783',
-    index:'Solactive Euro Overnight Return',
-    ter:0.10, spread:0,
-    taxRate:26, taxLabel:'26%', taxType:'standard',
-    taxNote:'Non prevalentemente obbligazionario → aliquota stimata 26%',
+    name:'Amundi EUR Overnight Return UCITS ETF Acc',
+    issuer:'Amundi', isin:'FR0010510800',
+    index:'Solactive €STR +8.5 bps Daily',
+    ter:0.10, spread:0.085, taxRate:14.69, taxLabel:'Tasse 14.69%', taxType:'standard',
     productUrl:'https://easy.bnpparibas-am.com/it/etf-fondi-indicizzati/leonia',
+    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
     checked:false,
   },
   {
-    id:'flesa', ticker:'FLESA', color:'#ff7c5c',
-    name:'Franklin Euro Short Maturity UCITS ETF',
-    issuer:'Franklin Templeton', isin:'IE00BF2GLM36',
-    index:'Gestione attiva – breve scadenza EUR',
-    ter:0.06, spread:0.05,
-    taxRate:26, taxLabel:'26%', taxType:'standard',
-    taxNote:'Composizione mista → aliquota stimata 26% (per prudenza)',
-    productUrl:'https://www.franklintempleton.it/investments/options/exchange-traded-funds/products/32378/SINGLSHARE/franklin-euro-short-maturity-ucits-etf/IE00BF2GLM36',
+    id:'jest', ticker:'JEST', color:'#ff7c5c',
+    name:'JPMorgan EUR Ultra-Short Income UCITS ETF - EUR (Acc)',
+    issuer:'JPMorgan', isin:'IE00BD9MMF62',
+    index:'Gestione attiva',
+    ter:0.18, spread:0, taxRate:26, taxLabel:'Tasse 26%', taxType:'standard',
+    productUrl:'https://am.jpmorgan.com/it/it/asset-management/adv/products/jpm-eur-ultra-short-income-active-ucits-etf-eur-acc-ie00bd9mmf62',
+    whiteList:'https://am.jpmorgan.com/it/it/asset-management/adv/funds/tax-information/',
+    checked:false,
+  },
+  {
+    id:'peu', ticker:'PEU', color:'#ff7c5c',
+    name:'Invesco Euro Cash 3 Months UCITS ETF Acc',
+    issuer:'Invesco', isin:'IE00B3BPCH51',
+    index:'FTSE Eurozone Government Bill 0-6 Month Capped',
+    ter:0.09, spread:0, taxRate:12.5, taxLabel:'Tasse 12.5%', taxType:'bond',
+    productUrl:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html?msockid=280e5d8b378c66950f52494c3620677d://www.franklintempleton.it/prodotti/i-nostri-etf/prodotto/27049/ETA/franklin-euro-short-maturity-ucits-etf/IE000STIHQB2',
+    whiteList:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html#Documenti',
     checked:false,
   },
 ];
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // STATE
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 let estrRate  = null;
 let taxMode   = 'netto';
 let scenario  = 'flat';
 let chart     = null;
 let cdCounter = 0;
 const BOLLO_ETF = 0.20;
-
-// depositi: array di oggetti { id, name, rate, tax, bollo, checked, color }
-const CD_COLORS = ['#64748b','#94a3b8','#475569','#334155','#1e293b'];
 let deposits = [];
+const CD_COLORS = ['#94a3b8','#7b6cff','#64748b','#a78bfa','#475569'];
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // ECB FETCH
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 async function fetchESTR() {
   try {
     const r = await fetch('estr.json?v=' + Date.now());
@@ -445,7 +489,6 @@ async function fetchESTR() {
       if (j.rate && !isNaN(j.rate)) return { rate: j.rate, updated: j.updated };
     }
   } catch(e) { console.warn('estr.json:', e.message); }
-
   const ecbUrl = 'https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
   try {
     const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(ecbUrl));
@@ -457,171 +500,140 @@ async function fetchESTR() {
       if (!isNaN(rate)) return { rate, updated: null };
     }
   } catch(e) { console.warn('Proxy fallback:', e.message); }
-
   return null;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // BUILD ETF CARDS
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function buildEtfCards() {
   const grid = document.getElementById('etfGrid');
   ETFS.forEach(etf => {
+    const taxClass = etf.taxType === 'bond' ? 'tag-tax12' : 'tag-tax26';
     const card = document.createElement('div');
-    card.className = 'instr-card' + (etf.checked ? ' active' : '');
+    card.className = 'instr-card' + (etf.checked ? ' etf-active' : '');
     card.id = 'etfcard-' + etf.id;
-    const taxClass = etf.taxType === 'bond' ? 'green' : 'yellow';
     card.innerHTML = `
       <div class="card-top">
-        <div class="card-check">
-          <input type="checkbox" ${etf.checked ? 'checked' : ''} id="chk-${etf.id}" />
-        </div>
-        <div class="card-main">
-          <div class="card-ticker">
-            <span class="card-dot" style="background:${etf.color}"></span>${etf.ticker}
-          </div>
-          <div class="card-name">${etf.issuer}</div>
+        <div class="card-chk etf"><input type="checkbox" ${etf.checked?'checked':''} /></div>
+        <div class="card-body">
+          <div class="card-ticker"><span class="card-dot" style="background:${etf.color}"></span>${etf.ticker}</div>
+          <div class="card-issuer">${etf.issuer}</div>
           <div class="card-index">${etf.index}</div>
           <div class="card-meta">
-            <span class="tag">ISIN ${etf.isin}</span>
-            <span class="tag blue">TER ${etf.ter}%</span>
-            <span class="tag ${taxClass}">${etf.taxLabel}</span>
-            <a class="tag-link" href="${etf.productUrl}" target="_blank" onclick="event.stopPropagation()">↗ Scheda</a>
+            <div class="card-meta-row">
+              <span class="tag tag-isin">ISIN ${etf.isin}</span>
+              <a class="tag-link" href="${etf.productUrl}" target="_blank" onclick="event.stopPropagation()">↗ Scheda</a>
+            </div>
+            <div class="card-meta-row">
+              <span class="tag tag-ter">TER ${etf.ter}%</span>
+              <span class="tag ${taxClass}">${etf.taxLabel}</span>
+            </div>
           </div>
-          <div class="card-tax-note">${etf.taxNote}</div>
         </div>
       </div>
       <div class="card-results" id="res-${etf.id}">
-        <div class="cr-item">
+        <div>
           <div class="cr-label">Rendimento stimato</div>
-          <div class="cr-val pos" id="yield-${etf.id}">—</div>
-          <div class="cr-sub" id="ymode-${etf.id}">—</div>
+          <div class="cr-val" id="yield-${etf.id}">—</div>
         </div>
-        <div class="cr-item">
+        <div>
           <div class="cr-label">Capitale a scadenza</div>
-          <div class="cr-val pos" id="final-${etf.id}">—</div>
+          <div class="cr-val" id="final-${etf.id}">—</div>
           <div class="cr-sub" id="gain-${etf.id}">—</div>
         </div>
       </div>`;
-
     card.addEventListener('click', e => {
       if (e.target.tagName === 'A' || e.target.tagName === 'INPUT') return;
       const chk = card.querySelector('input[type=checkbox]');
       chk.checked = !chk.checked;
       etf.checked = chk.checked;
-      card.classList.toggle('active', etf.checked);
+      card.classList.toggle('etf-active', etf.checked);
       render();
     });
     card.querySelector('input[type=checkbox]').addEventListener('change', e => {
       e.stopPropagation();
       etf.checked = e.target.checked;
-      card.classList.toggle('active', etf.checked);
+      card.classList.toggle('etf-active', etf.checked);
       render();
     });
     grid.appendChild(card);
   });
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // DEPOSIT CARDS
-// ═══════════════════════════════════════════════════════════
-function addDepositCard(initial = {}) {
+// ══════════════════════════════════════════════════
+function addDepositCard(init = {}) {
   cdCounter++;
-  const id  = 'cd' + cdCounter;
-  const col = CD_COLORS[(cdCounter - 1) % CD_COLORS.length];
   const dep = {
-    id, color: col, checked: true,
-    name:  initial.name  || `Conto Deposito ${cdCounter}`,
-    rate:  initial.rate  ?? 3.50,
-    tax:   initial.tax   ?? 26,
-    bollo: initial.bollo ?? 0,
+    id: 'cd' + cdCounter,
+    color: CD_COLORS[(cdCounter - 1) % CD_COLORS.length],
+    checked: true,
+    name:  init.name  || `Conto Deposito ${cdCounter}`,
+    rate:  init.rate  ?? 3.50,
+    tax:   init.tax   ?? 26,
+    bollo: init.bollo ?? 0,
   };
   deposits.push(dep);
-  renderDepositCard(dep);
-  render();
-}
 
-function renderDepositCard(dep) {
   const grid = document.getElementById('cdGrid');
   const card = document.createElement('div');
-  card.className = 'instr-card active2';
+  card.className = 'instr-card cd-active';
   card.id = 'cdcard-' + dep.id;
   card.innerHTML = `
     <button class="card-del" title="Rimuovi" onclick="removeDeposit('${dep.id}')">✕</button>
     <div class="card-top">
-      <div class="card-check card-check-cd">
-        <input type="checkbox" checked id="chkcd-${dep.id}" />
-      </div>
-      <div class="card-main">
-        <div class="card-ticker">
-          <span class="card-dot" style="background:${dep.color}"></span>
-          <span id="cdtitle-${dep.id}">${dep.name}</span>
-        </div>
-        <div class="card-name">Tasso fisso · Vincolo</div>
+      <div class="card-chk cd"><input type="checkbox" checked /></div>
+      <div class="card-body">
+        <div class="card-ticker"><span class="card-dot" style="background:${dep.color}"></span><span id="cdtitle-${dep.id}">${dep.name}</span></div>
+        <div class="card-issuer">Tasso fisso · Vincolo</div>
       </div>
     </div>
     <div class="cd-form">
-      <div class="field-row">
-        <div class="field">
-          <label>Nome</label>
-          <input type="text" id="cdname-${dep.id}" value="${dep.name}" />
-        </div>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="cdname-${dep.id}" value="${dep.name}" />
       </div>
       <div class="field-row">
-        <div class="field">
-          <label>Tasso lordo (%)</label>
-          <input type="number" id="cdrate-${dep.id}" value="${dep.rate}" min="0" max="15" step="0.05" />
-        </div>
-        <div class="field">
-          <label>Aliquota (%)</label>
-          <input type="number" id="cdtax-${dep.id}" value="${dep.tax}" min="0" max="50" step="0.5" />
-        </div>
-        <div class="field">
-          <label>Bollo (%/anno)</label>
-          <input type="number" id="cdbollo-${dep.id}" value="${dep.bollo}" min="0" max="2" step="0.01" />
-        </div>
+        <div class="field"><label>Tasso lordo (%)</label><input type="number" id="cdrate-${dep.id}" value="${dep.rate}" min="0" max="15" step="0.05" /></div>
+        <div class="field"><label>Aliquota (%)</label><input type="number" id="cdtax-${dep.id}" value="${dep.tax}" min="0" max="50" step="0.5" /></div>
+        <div class="field"><label>Bollo (%/anno)</label><input type="number" id="cdbollo-${dep.id}" value="${dep.bollo}" min="0" max="2" step="0.01" /></div>
       </div>
     </div>
-    <div class="card-results" id="res-${dep.id}">
-      <div class="cr-item">
-        <div class="cr-label">Tasso netto stimato</div>
-        <div class="cr-val pos2" id="yield-${dep.id}">—</div>
-        <div class="cr-sub" id="ymode-${dep.id}">—</div>
+    <div class="card-results">
+      <div>
+        <div class="cr-label">Rendimento stimato</div>
+        <div class="cr-val" id="yield-${dep.id}">—</div>
       </div>
-      <div class="cr-item">
+      <div>
         <div class="cr-label">Capitale a scadenza</div>
-        <div class="cr-val pos2" id="final-${dep.id}">—</div>
+        <div class="cr-val" id="final-${dep.id}">—</div>
         <div class="cr-sub" id="gain-${dep.id}">—</div>
       </div>
     </div>`;
 
-  // checkbox toggle
   card.addEventListener('click', e => {
     if (['A','INPUT','BUTTON'].includes(e.target.tagName)) return;
     const chk = card.querySelector('input[type=checkbox]');
     chk.checked = !chk.checked;
     dep.checked = chk.checked;
-    card.classList.toggle('active2', dep.checked);
+    card.classList.toggle('cd-active', dep.checked);
     render();
   });
   card.querySelector('input[type=checkbox]').addEventListener('change', e => {
     e.stopPropagation();
     dep.checked = e.target.checked;
-    card.classList.toggle('active2', dep.checked);
+    card.classList.toggle('cd-active', dep.checked);
     render();
   });
-
-  // live inputs
-  card.querySelector('#cdname-'  + dep.id).addEventListener('input', e => {
-    dep.name = e.target.value || dep.id;
-    document.getElementById('cdtitle-' + dep.id).textContent = dep.name;
-    render();
-  });
+  card.querySelector('#cdname-'  + dep.id).addEventListener('input', e => { dep.name = e.target.value || dep.id; document.getElementById('cdtitle-'+dep.id).textContent = dep.name; render(); });
   card.querySelector('#cdrate-'  + dep.id).addEventListener('input', e => { dep.rate  = parseFloat(e.target.value)||0; render(); });
   card.querySelector('#cdtax-'   + dep.id).addEventListener('input', e => { dep.tax   = parseFloat(e.target.value)||0; render(); });
   card.querySelector('#cdbollo-' + dep.id).addEventListener('input', e => { dep.bollo = parseFloat(e.target.value)||0; render(); });
 
   grid.appendChild(card);
+  render();
 }
 
 function removeDeposit(id) {
@@ -631,29 +643,29 @@ function removeDeposit(id) {
   render();
 }
 
-// ═══════════════════════════════════════════════════════════
-// SCENARIO CONTROLS
-// ═══════════════════════════════════════════════════════════
-const scenarioNotes = {
-  flat: 'Tasso €STR costante per tutta la durata',
-  up:   'Tasso €STR cresce ogni anno della variazione impostata',
-  down: 'Tasso €STR scende ogni anno (floor 0%)',
+// ══════════════════════════════════════════════════
+// SCENARIO
+// ══════════════════════════════════════════════════
+const scenNotes = {
+  flat: 'Tasso €STR costante per tutta la durata.',
+  up:   'Tasso €STR cresce ogni anno della variazione impostata.',
+  down: 'Tasso €STR scende ogni anno (floor 0%).',
 };
 document.getElementById('scenarioSeg').querySelectorAll('.seg-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#scenarioSeg .seg-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     scenario = btn.dataset.val;
-    document.getElementById('scenarioNote').textContent = scenarioNotes[scenario];
+    document.getElementById('scenarioNote').textContent = scenNotes[scenario];
     document.getElementById('deltaField').style.display = scenario === 'flat' ? 'none' : 'block';
     document.getElementById('deltaLabel').textContent   = scenario === 'up' ? 'Aumento annuo (%)' : 'Calo annuo (%)';
     render();
   });
 });
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // COMPUTE
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function getEtfGross(etf, year) {
   const delta = parseFloat(document.getElementById('scenarioDelta').value) || 0.25;
   let estr = estrRate;
@@ -662,15 +674,14 @@ function getEtfGross(etf, year) {
   return Math.max(0, estr + etf.spread - etf.ter);
 }
 
-function computePoints(type, ref, years, capital) {
-  const pts = [capital];
-  let cap = capital;
+function computePts(type, ref, years, capital) {
+  const pts = [capital]; let cap = capital;
   for (let y = 1; y <= years; y++) {
     if (type === 'etf') {
-      const gross = getEtfGross(ref, y) / 100;
+      const g = getEtfGross(ref, y) / 100;
       cap = taxMode === 'netto'
-        ? cap + cap * gross * (1 - ref.taxRate / 100) - cap * (BOLLO_ETF / 100)
-        : cap + cap * gross;
+        ? cap + cap * g * (1 - ref.taxRate / 100) - cap * (BOLLO_ETF / 100)
+        : cap + cap * g;
     } else {
       const interest = cap * (ref.rate / 100);
       cap = taxMode === 'netto'
@@ -682,11 +693,23 @@ function computePoints(type, ref, years, capital) {
   return pts;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // RENDER
-// ═══════════════════════════════════════════════════════════
-function fmt(v)    { return v.toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}); }
-function fmtPct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+// ══════════════════════════════════════════════════
+const fmt    = v => v.toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+
+function updateCardResults(id, yieldVal, finalV, gain, gainP, isDeposit) {
+  const yEl = document.getElementById('yield-' + id);
+  const fEl = document.getElementById('final-' + id);
+  const gEl = document.getElementById('gain-'  + id);
+  if (yEl) yEl.textContent = yieldVal.toFixed(3) + '%/anno';
+  if (fEl) fEl.textContent = fmt(finalV);
+  if (gEl) {
+    gEl.textContent = (gain >= 0 ? '+' : '') + fmt(gain) + ' (' + fmtPct(gainP) + ')';
+    gEl.style.color = gain >= 0 ? 'var(--accent)' : 'var(--danger)';
+  }
+}
 
 function render() {
   if (estrRate === null) return;
@@ -694,52 +717,34 @@ function render() {
   const years   = parseInt(document.getElementById('cdYears').value)   || 2;
   const horizon = Math.max(years, 3);
   const labels  = Array.from({length: horizon + 1}, (_, i) => i === 0 ? 'Oggi' : `Anno ${i}`);
-  const datasets = [];
-  const summaryRows = [];
+  const datasets = [], summaryRows = [];
 
-  // ── ETFs ──
+  // ETFs
   ETFS.forEach(etf => {
-    const pts = computePoints('etf', etf, horizon, capital);
-    const gross1 = getEtfGross(etf, 1);
-    const net1   = taxMode === 'netto' ? gross1 * (1 - etf.taxRate / 100) - BOLLO_ETF : gross1;
-    const finalV = pts[years];
+    const pts    = computePts('etf', etf, horizon, capital);
+    const g1     = getEtfGross(etf, 1);
+    const netY   = taxMode === 'netto' ? g1 * (1 - etf.taxRate / 100) - BOLLO_ETF : g1;
+    const finalV = pts[Math.min(years, horizon)];
     const gain   = finalV - capital;
-    const gainP  = gain / capital * 100;
-
-    // update card
-    document.getElementById('yield-' + etf.id).textContent = net1.toFixed(3) + '%/anno';
-    document.getElementById('ymode-' + etf.id).textContent = taxMode === 'netto' ? 'netto stimato anno 1' : 'lordo stimato anno 1';
-    document.getElementById('final-' + etf.id).textContent = fmt(finalV);
-    const gs = document.getElementById('gain-' + etf.id);
-    gs.textContent = (gain >= 0 ? '+' : '') + fmt(gain) + ' (' + fmtPct(gainP) + ')';
-    gs.style.color = gain >= 0 ? 'var(--accent)' : 'var(--red)';
-
+    updateCardResults(etf.id, netY, finalV, gain, gain/capital*100, false);
     if (!etf.checked) return;
     datasets.push({ label: etf.ticker, data: pts, borderColor: etf.color, backgroundColor:'transparent', borderWidth:2, pointRadius:3, tension:.3 });
-    summaryRows.push({ name: etf.ticker, color: etf.color, finalV, gain, gainP });
+    summaryRows.push({ name: etf.ticker, color: etf.color, finalV, gain, gainP: gain/capital*100 });
   });
 
-  // ── Deposits ──
+  // Deposits
   deposits.forEach(dep => {
-    const pts  = computePoints('cd', dep, horizon, capital);
-    const netR = taxMode === 'netto' ? dep.rate * (1 - dep.tax / 100) - dep.bollo : dep.rate;
-    const finalV = pts[years];
+    const pts    = computePts('cd', dep, horizon, capital);
+    const netY   = taxMode === 'netto' ? dep.rate * (1 - dep.tax / 100) - dep.bollo : dep.rate;
+    const finalV = pts[Math.min(years, horizon)];
     const gain   = finalV - capital;
-    const gainP  = gain / capital * 100;
-
-    document.getElementById('yield-' + dep.id).textContent = netR.toFixed(3) + '%/anno';
-    document.getElementById('ymode-' + dep.id).textContent = taxMode === 'netto' ? 'netto' : 'lordo';
-    document.getElementById('final-' + dep.id).textContent = fmt(finalV);
-    const gs = document.getElementById('gain-' + dep.id);
-    gs.textContent = (gain >= 0 ? '+' : '') + fmt(gain) + ' (' + fmtPct(gainP) + ')';
-    gs.style.color = gain >= 0 ? 'var(--accent2)' : 'var(--red)';
-
+    updateCardResults(dep.id, netY, finalV, gain, gain/capital*100, true);
     if (!dep.checked) return;
     datasets.push({ label: dep.name, data: pts, borderColor: dep.color, backgroundColor:'transparent', borderWidth:2.5, borderDash:[6,4], pointRadius:3, tension:.3 });
-    summaryRows.push({ name: dep.name, color: dep.color, finalV, gain, gainP });
+    summaryRows.push({ name: dep.name, color: dep.color, finalV, gain, gainP: gain/capital*100 });
   });
 
-  // ── Chart ──
+  // Chart
   const ctx = document.getElementById('myChart').getContext('2d');
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
@@ -749,59 +754,69 @@ function render() {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode:'index', intersect:false },
       plugins: {
-        legend: { labels: { color:'#7b82a0', font:{size:11}, padding:16, boxWidth:20, boxHeight:2 } },
+        legend: { labels: { color:'#6b738a', font:{size:11, family:"'Inter',sans-serif"}, padding:16, boxWidth:22, boxHeight:2 } },
         tooltip: {
-          backgroundColor:'#1a1d27', borderColor:'#2e3348', borderWidth:1,
-          titleColor:'#e8eaf0', bodyColor:'#7b82a0',
+          backgroundColor:'#13161e', borderColor:'#252a38', borderWidth:1,
+          titleColor:'#e8ecf4', bodyColor:'#6b738a',
+          titleFont: { family:"'Inter',sans-serif", size:12 },
+          bodyFont:  { family:"'JetBrains Mono',monospace", size:12 },
           callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` }
         }
       },
       scales: {
-        x: { grid:{color:'#1e2235'}, ticks:{color:'#7b82a0', font:{size:11}} },
-        y: { grid:{color:'#1e2235'}, ticks:{color:'#7b82a0', font:{size:11}, callback: v => '€' + Math.round(v).toLocaleString('it-IT')} }
+        x: {
+          grid: { color:'rgba(37,42,56,.8)' },
+          ticks: { color:'#6b738a', font:{ size:11, family:"'Inter',sans-serif" } }
+        },
+        y: {
+          grid: { color:'rgba(37,42,56,.8)' },
+          ticks: {
+            color:'#6b738a',
+            font: { size:11, family:"'JetBrains Mono',monospace" },
+            maxTicksLimit: 8,
+            callback: v => '€' + Math.round(v).toLocaleString('it-IT')
+          }
+        }
       }
     }
   });
 
-  // ── Summary table ──
+  // Summary table
   const tbody = document.getElementById('summaryBody');
-  if (summaryRows.length === 0) {
+  if (!summaryRows.length) {
     tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);font-size:11px;padding:8px 6px;">Nessuno strumento attivo</td></tr>';
   } else {
     tbody.innerHTML = summaryRows.map(r => `
       <tr>
-        <td><span class="dot" style="background:${r.color}"></span>${r.name}</td>
+        <td class="sum-name"><span class="sdot" style="background:${r.color}"></span>${r.name}</td>
         <td style="text-align:right">${fmt(r.finalV)}</td>
-        <td style="text-align:right" class="s-gain ${r.gain>=0?'pos':'neg'}">${fmtPct(r.gainP)}</td>
+        <td style="text-align:right" class="${r.gain>=0?'s-pos':'s-neg'}">${fmtPct(r.gainP)}</td>
       </tr>`).join('');
   }
 
-  // ── Subtitle ──
+  // Chart subtitle
   const sc = {flat:'costante',up:'crescente',down:'calante'}[scenario];
-  document.getElementById('chartSub').textContent = `${taxMode === 'netto' ? 'Netto' : 'Lordo'} · Scenario €STR ${sc} · capitale: ${fmt(capital)} · orizzonte: ${years} anni`;
+  document.getElementById('chartSub').textContent =
+    `${taxMode==='netto'?'Netto':'Lordo'} · €STR ${sc} · capitale ${fmt(capital)} · orizzonte ${years}y`;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // CONTROLS
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function setMode(mode) {
   taxMode = mode;
   document.getElementById('btnNetto').classList.toggle('active', mode === 'netto');
   document.getElementById('btnLordo').classList.toggle('active', mode === 'lordo');
   render();
 }
-
-['capital','cdYears','scenarioDelta'].forEach(id => {
-  document.getElementById(id).addEventListener('input', render);
-});
-
+['capital','cdYears','scenarioDelta'].forEach(id => document.getElementById(id).addEventListener('input', render));
 document.getElementById('addCdBtn').addEventListener('click', () => addDepositCard());
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 buildEtfCards();
-addDepositCard({ name: 'Conto Deposito 1', rate: 3.50, tax: 26, bollo: 0 });
+addDepositCard({ name:'Conto Deposito 1', rate:3.50, tax:26, bollo:0 });
 
 (async () => {
   const res = await fetchESTR();
