@@ -409,18 +409,34 @@ const BOLLO_ETF = 0.20;
 
 // ── ECB FETCH ─────────────────────────────────────────────────────────────────
 async function fetchESTR() {
-  const url = 'https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
-  try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
+  const url1 = 'https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
+  const url2 = 'https://sdw-wsrest.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
+
+  const parseECB = j => {
     const obs = j.dataSets[0].series['0:0:0'].observations;
     const keys = Object.keys(obs);
     return parseFloat(obs[keys[keys.length - 1]][0]);
-  } catch(e) {
-    console.warn('ECB API error:', e);
-    return null;
+  };
+
+  const attempts = [
+    () => fetch(url1),
+    () => fetch(url2),
+    () => fetch('https://corsproxy.io/?' + encodeURIComponent(url2)),
+    () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url2)),
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const r = await attempt();
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      const val = parseECB(j);
+      if (!isNaN(val)) return val;
+    } catch(e) {
+      console.warn('ECB API attempt failed:', e.message);
+    }
   }
+  return null;
 }
 
 // ── BUILD UI ──────────────────────────────────────────────────────────────────
@@ -469,7 +485,7 @@ function buildEtfGrid() {
       card.classList.toggle('active', etf.checked);
       render();
     });
-    document.getElementById('chk-' + etf.id, card).addEventListener('change', e => {
+    card.querySelector('#chk-' + etf.id).addEventListener('change', e => {
       etf.checked = e.target.checked;
       card.classList.toggle('active', etf.checked);
       render();
