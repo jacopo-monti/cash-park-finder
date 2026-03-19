@@ -86,6 +86,18 @@
       font-size: 11px; color: var(--muted); line-height: 1.6;
     }
     .disclaimer strong { color: var(--warning); }
+    .wl-banner {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: rgba(79,255,176,.05); border: 1px solid rgba(79,255,176,.2);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      font-size: 11px; color: var(--muted); line-height: 1.5;
+      margin-bottom: 0;
+    }
+    .wl-banner strong { color: var(--accent); font-family: var(--mono); }
+    .loading-bar {
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+      padding: 20px; color: var(--muted); font-size: 12px;
+    }
 
     /* ── FIELDS ── */
     .field { margin-bottom: 10px; }
@@ -331,6 +343,14 @@
         <label>Orizzonte / durata vincolo (anni)</label>
         <input type="number" id="cdYears" value="2" min="1" max="10" step="1" />
       </div>
+      <div class="field">
+        <label>Commissione acquisto ETF (€)</label>
+        <input type="number" id="buyComm" value="0" min="0" step="0.5" />
+      </div>
+      <div class="field">
+        <label>Commissione vendita ETF (€)</label>
+        <input type="number" id="sellComm" value="0" min="0" step="0.5" />
+      </div>
     </div>
 
     <hr class="divider" />
@@ -374,10 +394,18 @@
   <!-- ════ MAIN ════ -->
   <main class="main">
 
+    <!-- Whitelist banner -->
+    <div class="wl-banner" id="wlBanner" style="display:none;">
+      <span>📋</span>
+      <span id="wlBannerText">—</span>
+    </div>
+
     <!-- ETF cards -->
     <div>
       <div class="cards-section-title">ETF Monetari</div>
-      <div class="cards-grid" id="etfGrid"></div>
+      <div id="etfGrid" class="cards-grid">
+        <div class="loading-bar"><div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Caricamento ETF…</div>
+      </div>
     </div>
 
     <!-- Deposit cards -->
@@ -411,74 +439,7 @@
 // ══════════════════════════════════════════════════
 // ETF DATA
 // ══════════════════════════════════════════════════
-const ETFS = [
-  {
-    id:'xeon', ticker:'XEON', color:'#4fffb0',
-    name:'Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C',
-    issuer:'DWS / Xtrackers', isin:'LU0290358497',
-    index:'Solactive €STR +8.5 bps Daily TR',
-    ter:0.10, spread:0.085,   // €STR + 8.5bps (indice dichiarato)
-    taxRate:14.19, taxLabel:'Tasse 14.19%', taxType:'bond',
-    productUrl:'https://etf.dws.com/it-it/LU0290358497-eur-overnight-rate-swap-ucits-etf-1c/',
-    whiteList:'https://etf.dws.com/it-it/informativa-prodotti/etf-documenti/fiscalita-degli-etf/',
-    checked:true,
-  },
-  {
-    id:'c3m', ticker:'C3M', color:'#7b6cff',
-    name:'Amundi Euro Govies 0-6M Investment Grade UCITS ETF',
-    issuer:'Amundi', isin:'FR0010754200',
-    index:'FTSE Eurozone Govt Bill 0-6M Capped',
-    ter:0.14, spread:-0.05,   // Titoli di stato 0-6m storicamente ~€STR -5bps
-    taxRate:12.72, taxLabel:'Tasse 12.72%', taxType:'bond',
-    productUrl:'https://www.amundietf.it/it/privati/products/fixed-income/amundi-euro-government-bond-06-m-ucits-etf-acc/fr0010754200',
-    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
-    checked:true,
-  },
-  {
-    id:'smart', ticker:'SMART', color:'#ffb547',
-    name:'Amundi Smart Overnight Return UCITS ETF Acc',
-    issuer:'Amundi', isin:'LU1190417599',
-    index:'€STR Compounded (gestione attiva)',
-    ter:0.10, spread:0.10,    // Storicamente +10bps vs €STR grazie a gestione attiva
-    taxRate:26, taxLabel:'Tasse 26%', taxType:'standard',
-    productUrl:'https://www.amundietf.it/it/privati/products/fixed-income/amundi-smart-overnight-return-ucits-etf-acc/lu1190417599',
-    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
-    checked:false,
-  },
-  {
-    id:'leonia', ticker:'LEONIA', color:'#c77dff',
-    name:'Amundi EUR Overnight Return UCITS ETF Acc',
-    issuer:'Amundi', isin:'FR0010510800',
-    index:'Solactive €STR +8.5 bps Daily TR',
-    ter:0.10, spread:0.085,   // €STR + 8.5bps (stesso indice di XEON)
-    taxRate:14.69, taxLabel:'Tasse 14.69%', taxType:'standard',
-    productUrl:'https://easy.bnpparibas-am.com/it/etf-fondi-indicizzati/leonia',
-    whiteList:'https://www.amundi.it/investitori_professionali/comunicazioni-agli-investitori',
-    checked:false,
-  },
-  {
-    id:'jest', ticker:'JEST', color:'#ff7c5c',
-    name:'JPMorgan EUR Ultra-Short Income UCITS ETF - EUR (Acc)',
-    issuer:'JPMorgan', isin:'IE00BD9MMF62',
-    index:'ICE BofA 3M German T-Bill (gestione attiva)',
-    ter:0.18, spread:0.30,    // Storicamente +30bps vs €STR (debito bancario IG a breve)
-    taxRate:26, taxLabel:'Tasse 26%', taxType:'standard',
-    productUrl:'https://am.jpmorgan.com/it/it/asset-management/adv/products/jpm-eur-ultra-short-income-active-ucits-etf-eur-acc-ie00bd9mmf62',
-    whiteList:'https://am.jpmorgan.com/it/it/asset-management/adv/funds/tax-information/',
-    checked:false,
-  },
-  {
-    id:'peu', ticker:'PEU', color:'#38bdf8',
-    name:'Invesco Euro Cash 3 Months UCITS ETF Acc',
-    issuer:'Invesco', isin:'IE00B3BPCH51',
-    index:'FTSE Eurozone Govt Bill 0-6M Capped',
-    ter:0.09, spread:-0.05,   // Titoli di stato 0-6m storicamente ~€STR -5bps
-    taxRate:12.5, taxLabel:'Tasse 12.5%', taxType:'bond',
-    productUrl:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html',
-    whiteList:'https://www.invesco.com/it/it/financial-products/etfs/invesco-euro-cash-3-months-ucits-etf-acc.html#Documenti',
-    checked:false,
-  },
-];
+let ETFS = []; // caricato da etfs.json
 
 // ══════════════════════════════════════════════════
 // STATE
@@ -694,7 +655,11 @@ function getEtfGross(etf, year) {
 }
 
 function computePts(type, ref, years, capital) {
-  const pts = [capital]; let cap = capital;
+  const buyComm  = type === 'etf' ? (parseFloat(document.getElementById('buyComm').value)  || 0) : 0;
+  const sellComm = type === 'etf' ? (parseFloat(document.getElementById('sellComm').value) || 0) : 0;
+  // commissioni sottratte al capitale iniziale (acquisto) e finale (vendita)
+  let cap = capital - buyComm;
+  const pts = [capital]; // il punto 0 è il capitale lordo investito
   for (let y = 1; y <= years; y++) {
     if (type === 'etf') {
       const g = getEtfGross(ref, y) / 100;
@@ -707,7 +672,9 @@ function computePts(type, ref, years, capital) {
         ? cap + interest * (1 - ref.tax / 100) - cap * (ref.bollo / 100)
         : cap + interest;
     }
-    pts.push(Math.round(cap * 100) / 100);
+    // all'ultimo anno sottrai commissione di vendita
+    const finalCap = y === years ? Math.max(0, cap - sellComm) : cap;
+    pts.push(Math.round(finalCap * 100) / 100);
   }
   return pts;
 }
@@ -734,7 +701,7 @@ function render() {
   if (estrRate === null) return;
   const capital = parseFloat(document.getElementById('capital').value) || 10000;
   const years   = parseInt(document.getElementById('cdYears').value)   || 2;
-  const horizon = Math.max(years, 3);
+  const horizon = years;
   const labels  = Array.from({length: horizon + 1}, (_, i) => i === 0 ? 'Oggi' : `Anno ${i}`);
   const datasets = [], summaryRows = [];
 
@@ -828,16 +795,36 @@ function setMode(mode) {
   document.getElementById('btnLordo').classList.toggle('active', mode === 'lordo');
   render();
 }
-['capital','cdYears','scenarioDelta'].forEach(id => document.getElementById(id).addEventListener('input', render));
+['capital','cdYears','scenarioDelta','buyComm','sellComm'].forEach(id => document.getElementById(id).addEventListener('input', render));
 document.getElementById('addCdBtn').addEventListener('click', () => addDepositCard());
 
 // ══════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════
-buildEtfCards();
-addDepositCard({ name:'Conto Deposito 1', rate:3.50, tax:26, bollo:0 });
-
 (async () => {
+  // Carica ETF da file esterno
+  try {
+    const r = await fetch('etfs.json?v=' + Date.now());
+    if (r.ok) {
+      const data = await r.json();
+      ETFS = data.etfs;
+      // Banner whitelist
+      const wl = data.whitelist_period;
+      if (wl) {
+        const banner = document.getElementById('wlBanner');
+        document.getElementById('wlBannerText').innerHTML =
+          `Le percentuali di whitelist e la conseguente tassazione stimata sono quelle applicabili dal <strong>${wl.label}</strong>. Verificare la whitelist aggiornata prima di ogni decisione.`;
+        banner.style.display = 'flex';
+      }
+    }
+  } catch(e) {
+    console.warn('etfs.json non disponibile, uso dati inline:', e.message);
+  }
+
+  buildEtfCards();
+  addDepositCard({ name:'Conto Deposito 1', rate:3.50, tax:26, bollo:0 });
+
+  // Carica €STR
   const res = await fetchESTR();
   const pill = document.getElementById('estrPill');
   if (res) {
