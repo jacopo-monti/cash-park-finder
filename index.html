@@ -409,33 +409,31 @@ const BOLLO_ETF = 0.20;
 
 // ── ECB FETCH ─────────────────────────────────────────────────────────────────
 async function fetchESTR() {
-  const url1 = 'https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
-  const url2 = 'https://sdw-wsrest.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
-
-  const parseECB = j => {
-    const obs = j.dataSets[0].series['0:0:0'].observations;
-    const keys = Object.keys(obs);
-    return parseFloat(obs[keys[keys.length - 1]][0]);
-  };
-
-  const attempts = [
-    () => fetch(url1),
-    () => fetch(url2),
-    () => fetch('https://corsproxy.io/?' + encodeURIComponent(url2)),
-    () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url2)),
-  ];
-
-  for (const attempt of attempts) {
-    try {
-      const r = await attempt();
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+  // 1. File locale aggiornato dal GitHub Action giornaliero (zero CORS)
+  try {
+    const r = await fetch('estr.json?v=' + Date.now());
+    if (r.ok) {
       const j = await r.json();
-      const val = parseECB(j);
-      if (!isNaN(val)) return val;
-    } catch(e) {
-      console.warn('ECB API attempt failed:', e.message);
+      if (j.rate && !isNaN(j.rate)) {
+        console.info('€STR loaded from estr.json, updated:', j.updated);
+        return { rate: j.rate, updated: j.updated };
+      }
     }
-  }
+  } catch(e) { console.warn('estr.json not available:', e.message); }
+
+  // 2. Proxy pubblico come fallback (richiede connessione)
+  const ecbUrl = 'https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
+  try {
+    const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(ecbUrl));
+    if (r.ok) {
+      const j = await r.json();
+      const obs = j.dataSets[0].series['0:0:0'].observations;
+      const keys = Object.keys(obs);
+      const rate = parseFloat(obs[keys[keys.length - 1]][0]);
+      if (!isNaN(rate)) return { rate, updated: null };
+    }
+  } catch(e) { console.warn('Proxy fallback failed:', e.message); }
+
   return null;
 }
 
@@ -667,13 +665,14 @@ function setMode(mode) {
 buildEtfGrid();
 
 (async () => {
-  const rate = await fetchESTR();
+  const result = await fetchESTR();
   const pill = document.getElementById('estrPill');
-  if (rate !== null) {
-    estrRate = rate;
-    document.getElementById('estrLabel').textContent = `€STR: ${rate.toFixed(3)}%`;
+  if (result !== null) {
+    estrRate = result.rate;
+    const upd = result.updated && result.updated !== 'fallback' ? ` · agg. ${result.updated}` : '';
+    document.getElementById('estrLabel').textContent = `€STR: ${estrRate.toFixed(3)}%${upd}`;
   } else {
-    estrRate = 1.933; // fallback aggiornato al 17 marzo 2026
+    estrRate = 1.933; // fallback al 17 marzo 2026
     document.getElementById('estrLabel').textContent = `€STR: ${estrRate.toFixed(3)}% (stimato)`;
     pill.classList.add('stale');
   }

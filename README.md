@@ -1,11 +1,11 @@
 # CashParkFinder
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
-[![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222?logo=github)](https://jacopo-monti.github.io/cashparkfinder/)
+[![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222?logo=github)](https://jacopo-monti.github.io/cash-park-finder/)
 
 A browser-based, tax-aware comparison tool for Italian monetary ETFs vs fixed-term deposit accounts — runs entirely in your browser, no installation required.
 
-🔗 **[Open the app](https://jacopo-monti.github.io/cashparkfinder/)**
+🔗 **[Open the app](https://jacopo-monti.github.io/cash-park-finder/)**
 
 ---
 
@@ -44,7 +44,7 @@ This is a mathematical simulation tool only. It:
 
 Just open [`index.html`](index.html) in a browser, or visit the hosted version at:
 
-**[https://jacopo-monti.github.io/cashparkfinder/](https://jacopo-monti.github.io/cashparkfinder/)**
+**[https://jacopo-monti.github.io/cash-park-finder/](https://jacopo-monti.github.io/cash-park-finder/)**
 
 ### How it works
 
@@ -121,7 +121,7 @@ The app is a single self-contained HTML file. There are no dependencies, no buil
 
 1. Fork or clone this repository
 2. Go to **Settings → Pages → Source → Deploy from branch → main**
-3. The app will be live at `https://<your-username>.github.io/cashparkfinder/`
+3. The app will be live at `https://<your-username>.github.io/cash-park-finder/`
 
 Alternatively, just download `index.html` and open it locally — it works fully offline (except for the live €STR fetch, which requires an internet connection).
 
@@ -139,6 +139,6 @@ See [LICENSE](LICENSE) for full terms.
 
 ## 📧 Contact
 
-**Issues & feature requests**: [open an issue](https://github.com/jacopo-monti/cashparkfinder/issues)  
+**Issues & feature requests**: [open an issue](https://github.com/jacopo-monti/cash-park-finder/issues)  
 **Other inquiries**: jacopo.monti.jm@gmail.com  
 🐙 [@jacopo-monti](https://github.com/jacopo-monti)

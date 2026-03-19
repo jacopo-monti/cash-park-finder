@@ -1,0 +1,50 @@
+name: Update €STR Rate
+
+on:
+  schedule:
+    # Ogni giorno alle 08:00 UTC (la BCE pubblica il lunedì)
+    - cron: '0 8 * * *'
+  workflow_dispatch: # consente esecuzione manuale
+
+jobs:
+  fetch-estr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch €STR from ECB
+        run: |
+          python3 - << 'EOF'
+          import urllib.request, json, datetime
+
+          url = "https://data.ecb.europa.eu/api/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata"
+          try:
+              with urllib.request.urlopen(url, timeout=15) as r:
+                  data = json.loads(r.read())
+              obs = data["dataSets"][0]["series"]["0:0:0"]["observations"]
+              keys = list(obs.keys())
+              rate = float(obs[keys[-1]][0])
+              out = {"rate": rate, "updated": datetime.date.today().isoformat(), "source": "ECB Data Portal"}
+              print(f"Fetched €STR: {rate}")
+          except Exception as e:
+              print(f"Fetch failed: {e} — keeping existing file if present")
+              import sys, os
+              if os.path.exists("estr.json"):
+                  sys.exit(0)
+              out = {"rate": 1.933, "updated": "fallback", "source": "fallback"}
+
+          with open("estr.json", "w") as f:
+              json.dump(out, f)
+          EOF
+
+      - name: Commit estr.json if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add estr.json
+          git diff --cached --quiet || git commit -m "chore: update €STR rate [skip ci]"
+          git push
