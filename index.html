@@ -483,6 +483,7 @@ async function fetchESTR() {
 // ══════════════════════════════════════════════════
 function buildEtfCards() {
   const grid = document.getElementById('etfGrid');
+  grid.innerHTML = ''; // rimuove il placeholder "Caricamento ETF..."
   ETFS.forEach(etf => {
     const terClass  = etf.ter < 0.15 ? 'tag-ter-green' : etf.ter <= 0.20 ? 'tag-ter-yellow' : 'tag-ter-red';
     const taxClass  = etf.taxRate < 15 ? 'tag-tax-green' : etf.taxRate <= 20 ? 'tag-tax-yellow' : 'tag-tax-red';
